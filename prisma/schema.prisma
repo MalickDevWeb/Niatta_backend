@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
+  extensions = [postgis()]
+}
+
+enum UserStatus {
+  active
+  suspended
+}
+
+enum EntityStatus {
+  active
+  inactive
+}
+
+enum StoreSource {
+  citizen_report
+  admin
+}
+
+enum ReportStatus {
+  pending
+  under_review
+  confirmed
+  rejected
+}
+
+model User {
+  id              String          @id @default(uuid()) @db.Uuid
+  name            String
+  phone           String          @unique
+  passwordHash    String
+  status          UserStatus      @default(active)
+  phoneVerifiedAt DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  roles           UserRole[]
+  observations    PriceObservation[]
+}
+
+model Role {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String       @unique
+  description String?
+  isSystem    Boolean      @default(false)
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  users       UserRole[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String       @unique
+  description String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  roles       RolePermission[]
+}
+
+model UserRole {
+  userId String @db.Uuid
+  roleId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  @@id([userId, roleId])
+}
+
+model RolePermission {
+  roleId       String     @db.Uuid
+  permissionId String     @db.Uuid
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  @@id([roleId, permissionId])
+}
+
+model Category {
+  id          String         @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String         @unique
+  icon        String?
+  description String?
+  status      EntityStatus   @default(active)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  products    Product[]
+}
+
+model Product {
+  id            String             @id @default(uuid()) @db.Uuid
+  categoryId    String             @db.Uuid
+  name          String
+  slug          String             @unique
+  icon          String?
+  unit          String
+  description   String?
+  imageUrl      String?
+  status        EntityStatus       @default(active)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  category      Category           @relation(fields: [categoryId], references: [id])
+  observations  PriceObservation[]
+  @@index([name])
+}
+
+model Store {
+  id             String             @id @default(uuid()) @db.Uuid
+  name           String             @default("Point de vente observe")
+  latitude       Decimal            @db.Decimal(10, 7)
+  longitude      Decimal            @db.Decimal(10, 7)
+  location       Unsupported("geometry(Point, 4326)")?
+  city           String?
+  neighborhood   String?
+  status         EntityStatus       @default(active)
+  source         StoreSource        @default(citizen_report)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  observations   PriceObservation[]
+  
+  @@index([latitude, longitude])
+  @@index([location], name: "store_location_idx", type: Gist)
+}
+
+model PriceObservation {
+  id           String       @id @default(uuid()) @db.Uuid
+  storeId      String       @db.Uuid
+  productId    String       @db.Uuid
+  userId       String       @db.Uuid
+  price        Decimal      @db.Decimal(12, 2)
+  latitude     Decimal      @db.Decimal(10, 7)
+  longitude    Decimal      @db.Decimal(10, 7)
+  location     Unsupported("geometry(Point, 4326)")?
+  city         String?
+  neighborhood String?
+  photoUrl     String?
+  comment      String?
+  status       ReportStatus @default(pending)
+  observedAt   DateTime
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  store        Store        @relation(fields: [storeId], references: [id])
+  product      Product      @relation(fields: [productId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+  
+  @@index([storeId, productId, userId, observedAt])
+  @@index([location], name: "observation_location_idx", type: Gist)
+}
