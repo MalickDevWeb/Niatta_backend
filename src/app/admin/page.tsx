@@ -14,7 +14,7 @@ export default async function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-black text-gray-800">Vue d'ensemble</h2>
+      <h2 className="text-2xl font-black text-gray-800">Vue d&apos;ensemble</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Stats Cards */}

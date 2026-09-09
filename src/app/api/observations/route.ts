@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-
+import jwt from 'jsonwebtoken';
 const prisma = new PrismaClient();
 
 export async function POST(request: Request) {
@@ -22,11 +22,10 @@ export async function POST(request: Request) {
     }
     const token = authHeader.split(' ')[1];
     
-    let decoded: any;
+    let decoded: { id: string };
     try {
-      const jwt = require('jsonwebtoken');
-      decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret-key-justeprix');
-    } catch (err) {
+      decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret-key-justeprix') as { id: string };
+    } catch {
       return NextResponse.json({ success: false, error: 'Session invalide ou expirée.' }, { status: 401 });
     }
 
@@ -60,7 +59,8 @@ export async function POST(request: Request) {
         neighborhood: neighborhood,
         latitude: 0,
         longitude: 0,
-        status: 'pending'
+        status: 'pending',
+        observedAt: new Date()
       }
     });
     

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Home, Users, Package, AlertTriangle, Settings, LogOut } from 'lucide-react';
+import { Home, Users, Package, AlertTriangle, Settings, LogOut, MapPin } from 'lucide-react';
 
 export default function AdminLayout({
   children,
@@ -44,6 +44,10 @@ export default function AdminLayout({
             <Users size={20} />
             Utilisateurs
           </Link>
+          <Link href="/admin/gatherings" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-red-50 hover:text-red-600 font-medium transition-colors">
+            <MapPin size={20} />
+            Rassemblement
+          </Link>
         </nav>
         
         <div className="p-4 border-t border-gray-100">
@@ -62,7 +66,7 @@ export default function AdminLayout({
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Topbar */}
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 z-10">
-          <h1 className="text-xl font-bold text-gray-800">Panneau d'Administration</h1>
+          <h1 className="text-xl font-bold text-gray-800">Panneau d&apos;Administration</h1>
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-primary-light flex items-center justify-center text-primary font-bold border-2 border-white shadow-sm">
               AD

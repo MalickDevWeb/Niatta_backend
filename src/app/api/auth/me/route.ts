@@ -18,10 +18,10 @@ export async function GET(request: Request) {
 
     const token = authHeader.split(' ')[1];
 
-    let decoded: any;
+    let decoded: { id: string, phone: string };
     try {
-      decoded = jwt.verify(token, JWT_SECRET);
-    } catch (err) {
+      decoded = jwt.verify(token, JWT_SECRET) as { id: string, phone: string };
+    } catch {
       return NextResponse.json(
         { success: false, error: 'Token invalide ou expiré' },
         { status: 401 }
@@ -55,7 +55,7 @@ export async function GET(request: Request) {
       },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error('Me API Error:', error);
     return NextResponse.json(
       { success: false, error: 'Erreur interne du serveur' },

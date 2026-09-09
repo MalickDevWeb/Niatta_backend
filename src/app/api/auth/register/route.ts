@@ -18,6 +18,11 @@ export async function POST(request: Request) {
       );
     }
 
+    // Password must be exactly 4 digits
+    if (!/^\d{4}$/.test(password)) {
+      return NextResponse.json({ success: false, error: 'Le mot de passe doit être composé de 4 chiffres exactement' }, { status: 400 });
+    }
+
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: { phone }
@@ -60,7 +65,7 @@ export async function POST(request: Request) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error('Register API Error:', error);
     return NextResponse.json(
       { success: false, error: 'Erreur interne du serveur' },
