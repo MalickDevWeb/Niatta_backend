@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { productId, formatId, price, city, neighborhood, storeName, latitude, longitude, storeId } = body;
+    const { productId, formatId, price, city, neighborhood, storeName, latitude, longitude, storeId, photoUrl } = body;
     
     if (!productId || typeof productId !== 'string' || productId.trim() === '') {
       return NextResponse.json({ success: false, error: 'Veuillez sélectionner un produit valide.' }, { status: 400 });
@@ -57,6 +57,30 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: false, error: 'Boutique spécifiée introuvable.' }, { status: 400 });
       }
     } else {
+      // Handle Base64 Image if provided
+      let savedImageUrl = null;
+      if (photoUrl && photoUrl.startsWith('data:image')) {
+        try {
+          const fs = require('fs');
+          const path = require('path');
+          const { v4: uuidv4 } = require('uuid');
+          
+          const base64Data = photoUrl.replace(/^data:image\/\w+;base64,/, "");
+          const extension = photoUrl.substring(photoUrl.indexOf('/') + 1, photoUrl.indexOf(';base64'));
+          const fileName = `${uuidv4()}.${extension}`;
+          const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+          
+          if (!fs.existsSync(uploadDir)){
+              fs.mkdirSync(uploadDir, { recursive: true });
+          }
+          
+          fs.writeFileSync(path.join(uploadDir, fileName), base64Data, 'base64');
+          savedImageUrl = `http://localhost:3000/uploads/${fileName}`;
+        } catch (e) {
+          console.error("Failed to save base64 image", e);
+        }
+      }
+
       // Nouvelle boutique : Algorithme garde-fou anti-doublon
       const recentStores: any[] = await prisma.$queryRaw`
         SELECT id FROM "Store"
@@ -78,6 +102,7 @@ export async function POST(request: Request) {
           neighborhood: neighborhood || 'Inconnu',
           latitude: lat,
           longitude: lng,
+          imageUrl: savedImageUrl,
           source: 'citizen_report'
         }
       });
