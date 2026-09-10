@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { toggleUserStatus } from './actions';
+import { toggleUserStatus, deleteUser } from './actions';
 
 const prisma = new PrismaClient();
 
@@ -75,15 +75,23 @@ export default async function UsersPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <form action={toggleUserStatus} className="inline-flex">
-                        <input type="hidden" name="id" value={user.id} />
-                        <input type="hidden" name="currentStatus" value={user.status} />
-                        <button type="submit" className={`text-xs px-3 py-1.5 font-bold rounded-lg transition-colors ${
-                          user.status === 'active' ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-green-100 text-green-600 hover:bg-green-200'
-                        }`}>
-                          {user.status === 'active' ? 'Suspendre' : 'Réactiver'}
-                        </button>
-                      </form>
+                      <div className="flex items-center justify-end gap-1">
+                        <form action={toggleUserStatus} className="inline-flex">
+                          <input type="hidden" name="id" value={user.id} />
+                          <input type="hidden" name="currentStatus" value={user.status} />
+                          <button type="submit" className={`text-xs px-3 py-1.5 font-bold rounded-lg transition-colors ${
+                            user.status === 'active' ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-green-100 text-green-600 hover:bg-green-200'
+                          }`}>
+                            {user.status === 'active' ? 'Suspendre' : 'Réactiver'}
+                          </button>
+                        </form>
+                        <form action={deleteUser} className="inline-flex">
+                          <input type="hidden" name="id" value={user.id} />
+                          <button type="submit" className="text-xs px-2 py-1.5 font-bold rounded-lg bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-600 transition-colors ml-1">
+                            ✕
+                          </button>
+                        </form>
+                      </div>
                     </td>
                   </tr>
                 ))

@@ -20,3 +20,19 @@ export async function toggleUserStatus(formData: FormData) {
   
   revalidatePath('/admin/users');
 }
+
+export async function deleteUser(formData: FormData) {
+  const id = formData.get('id') as string;
+  if (!id) return;
+
+  // Supprimer les rôles de l'utilisateur d'abord
+  await prisma.userRole.deleteMany({ where: { userId: id } });
+  
+  // Supprimer les observations de l'utilisateur
+  await prisma.priceObservation.deleteMany({ where: { userId: id } });
+
+  // Supprimer l'utilisateur
+  await prisma.user.delete({ where: { id } });
+
+  revalidatePath('/admin/users');
+}

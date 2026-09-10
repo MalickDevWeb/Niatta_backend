@@ -103,18 +103,33 @@ model Product {
   name              String
   slug              String             @unique
   icon              String?
-  unit              String
   description       String?
   imageUrl          String?
-  brand             String?            // Marque du produit (ex: SDE, NMA)
-  weight            String?            // Grammage / contenance (ex: 25kg, 1L)
-  officialPriceCap  Decimal?           @db.Decimal(12, 2)  // Plafond légal fixé par l'État
+  tags              String[]           // Tags pour la recherche (ex: Petit-déjeuner, Base)
   status            EntityStatus       @default(active)
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   category          Category           @relation(fields: [categoryId], references: [id])
-  observations      PriceObservation[]
+  formats           ProductFormat[]
+  
   @@index([name])
+}
+
+model ProductFormat {
+  id                String             @id @default(uuid()) @db.Uuid
+  productId         String             @db.Uuid
+  label             String             // Ex: "1 kg", "5 L", "Carton"
+  unit              String             // Ex: "kg", "litre", "pièce"
+  weight            String?
+  imageUrl          String?            // Ex: "1kg", "5L"
+  officialPriceCap  Decimal?           @db.Decimal(12, 2)  // Plafond légal pour ce format
+  status            EntityStatus       @default(active)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  product           Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  observations      PriceObservation[]
+
+  @@unique([productId, label])
 }
 
 model Store {
@@ -139,27 +154,27 @@ model Store {
 }
 
 model PriceObservation {
-  id           String       @id @default(uuid()) @db.Uuid
-  storeId      String       @db.Uuid
-  productId    String       @db.Uuid
-  userId       String       @db.Uuid
-  price        Decimal      @db.Decimal(12, 2)
-  latitude     Decimal      @db.Decimal(10, 7)
-  longitude    Decimal      @db.Decimal(10, 7)
-  location     Unsupported("geometry(Point, 4326)")?
-  city         String?
-  neighborhood String?
-  photoUrl     String?
-  comment      String?
-  status       ReportStatus @default(pending)
-  observedAt   DateTime
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  store        Store        @relation(fields: [storeId], references: [id])
-  product      Product      @relation(fields: [productId], references: [id])
-  user         User         @relation(fields: [userId], references: [id])
+  id               String          @id @default(uuid()) @db.Uuid
+  storeId          String          @db.Uuid
+  productFormatId  String          @db.Uuid
+  userId           String          @db.Uuid
+  price            Decimal         @db.Decimal(12, 2)
+  latitude         Decimal         @db.Decimal(10, 7)
+  longitude        Decimal         @db.Decimal(10, 7)
+  location         Unsupported("geometry(Point, 4326)")?
+  city             String?
+  neighborhood     String?
+  photoUrl         String?
+  comment          String?
+  status           ReportStatus    @default(pending)
+  observedAt       DateTime
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  store            Store           @relation(fields: [storeId], references: [id])
+  productFormat    ProductFormat   @relation(fields: [productFormatId], references: [id])
+  user             User            @relation(fields: [userId], references: [id])
   
-  @@index([storeId, productId, userId, observedAt])
+  @@index([storeId, productFormatId, userId, observedAt])
   @@index([location], name: "observation_location_idx", type: Gist)
 }
 

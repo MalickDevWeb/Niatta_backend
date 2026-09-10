@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 export default async function ProductsPage() {
   const [products, categories] = await Promise.all([
     prisma.product.findMany({
-      include: { category: true },
+      include: { category: true, formats: { orderBy: { officialPriceCap: 'asc' } } },
       orderBy: { name: 'asc' },
     }),
     prisma.category.findMany({ orderBy: { name: 'asc' } }),
@@ -16,13 +16,17 @@ export default async function ProductsPage() {
     id: p.id,
     name: p.name,
     icon: p.icon,
-    unit: p.unit,
     description: p.description,
-    brand: (p as any).brand ?? null,
-    weight: (p as any).weight ?? null,
-    officialPriceCap: (p as any).officialPriceCap ? Number((p as any).officialPriceCap) : null,
     status: p.status,
     category: { id: p.category.id, name: p.category.name },
+    formats: p.formats.map(f => ({
+      id: f.id,
+      label: f.label,
+      unit: f.unit,
+      weight: f.weight,
+      officialPriceCap: f.officialPriceCap ? Number(f.officialPriceCap) : null,
+      imageUrl: f.imageUrl,
+    })),
   }));
 
   return <ProductsClient products={serialized} categories={categories} />;

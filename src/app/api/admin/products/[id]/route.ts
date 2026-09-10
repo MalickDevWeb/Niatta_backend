@@ -12,19 +12,19 @@ function slugify(text: string) {
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const body = await request.json();
-  const { name, categoryId, unit, icon, brand, weight, officialPriceCap, description } = body;
+  const { name, categoryId, icon, description, imageUrl } = body;
 
-  if (!name || !categoryId || !unit) {
+  if (!name || !categoryId) {
     return NextResponse.json({ error: 'Champs requis manquants' }, { status: 400 });
   }
 
   const updated = await prisma.product.update({
     where: { id },
     data: {
-      name, slug: slugify(name), unit,
-      icon: icon || null, brand: brand || null, weight: weight || null,
-      officialPriceCap: officialPriceCap != null ? parseFloat(officialPriceCap) : null,
+      name, slug: slugify(name),
+      icon: icon || null,
       description: description || null, categoryId,
+      imageUrl: imageUrl || null,
     },
   });
 
@@ -35,7 +35,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 // DELETE /api/admin/products/[id] — Supprimer un produit
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await prisma.priceObservation.deleteMany({ where: { productId: id } });
+  await prisma.priceObservation.deleteMany({ where: { productFormat: { productId: id } } });
   await prisma.product.delete({ where: { id } });
   revalidatePath('/admin/products');
   return NextResponse.json({ success: true });

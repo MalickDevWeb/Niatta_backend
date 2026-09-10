@@ -24,7 +24,7 @@ async function main() {
   );
   console.log(`✅ ${permissions.length} permissions créées`);
 
-  const citizen = await prisma.role.upsert({
+  await prisma.role.upsert({
     where: { slug: 'citizen' },
     update: {},
     create: { name: 'Citizen', slug: 'citizen', isSystem: true },
@@ -56,55 +56,89 @@ async function main() {
       phone: adminPhone,
       passwordHash: adminPassword,
       name: 'Admin System',
-      roles: {
-        create: {
-          roleId: adminRole.id
-        }
-      },
+      roles: { create: { roleId: adminRole.id } },
       status: 'active',
-      phoneVerifiedAt: new Date()
+      phoneVerifiedAt: new Date(),
     },
   });
-  console.log(`✅ Utilisateurs créés (admin: ${adminPhone} / admin123)`);
+  console.log(`✅ Admin: ${adminPhone} / admin123`);
 
+  function slugify(text: string) {
+    return text.toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, '').replace(/--+/g, '-');
+  }
+
+  // ─── Catégories ─────────────────────────────────────────────────────────────
   const categoriesData = [
-    { name: 'Riz', slug: 'riz', icon: 'twemoji:sheaf-of-rice' },
-    { name: 'Sucre', slug: 'sucre', icon: 'twemoji:sugar' },
-    { name: 'Huile', slug: 'huile', icon: 'twemoji:bottle-with-popping-cork' },
-    { name: 'Lait', slug: 'lait', icon: 'twemoji:glass-of-milk' },
-    { name: 'Farine', slug: 'farine', icon: 'twemoji:bread' },
+    { name: 'Ndeki',     slug: 'ndeki',     icon: '/assets/images/image.png' },
+    { name: 'Agne',      slug: 'agne',      icon: '/assets/images/agne.png' },
   ];
 
+  const categoryMap: Record<string, string> = {};
   for (const cat of categoriesData) {
-    await prisma.category.upsert({
+    const created = await prisma.category.upsert({
       where: { slug: cat.slug },
-      update: {},
+      update: { name: cat.name, icon: cat.icon },
       create: cat,
     });
+    categoryMap[cat.slug] = created.id;
   }
   console.log(`✅ ${categoriesData.length} catégories créées`);
 
-  const rizCat = await prisma.category.findUnique({ where: { slug: 'riz' } });
-  const sucreCat = await prisma.category.findUnique({ where: { slug: 'sucre' } });
-  const huileCat = await prisma.category.findUnique({ where: { slug: 'huile' } });
+  // ─── Produits ────────────────────────────────────────────────────────────────
+  type ProdDef = { name: string; icon: string; unit: string; officialPriceCap?: number };
+  const productsByCategorySlug: Record<string, ProdDef[]> = {
+    'ndeki': [
+      { name: 'Beurre', icon: 'fluent-emoji:butter', unit: 'kg' },
+      { name: 'Café',   icon: 'fluent-emoji:hot-beverage', unit: 'kg' },
+      { name: 'Lait',   icon: 'fluent-emoji:glass-of-milk', unit: 'kg' },
+      { name: 'Sucre',  icon: 'fluent-emoji:candy', unit: 'kg', officialPriceCap: 600 },
+      { name: 'Pain',   icon: 'fluent-emoji:baguette-bread', unit: 'pièce', officialPriceCap: 150 },
+    ],
+    'agne': [
+      { name: 'Riz',    icon: 'fluent-emoji:cooked-rice', unit: 'kg', officialPriceCap: 300 },
+      { name: 'Huile',  icon: 'fluent-emoji:olive', unit: 'litre', officialPriceCap: 1000 },
+      { name: 'Farine', icon: 'fluent-emoji:wheat', unit: 'kg', officialPriceCap: 400 },
+      { name: 'Mil',    icon: 'fluent-emoji:ear-of-corn', unit: 'kg', officialPriceCap: 388 },
+      { name: 'Pâtes',  icon: 'fluent-emoji:spaghetti', unit: 'kg' },
+    ],
+  };
 
-  if (rizCat && sucreCat && huileCat) {
-    const productsData = [
-      { name: 'Riz brisé parfumé', slug: 'riz-brise-parfume', unit: 'kg', icon: 'twemoji:sheaf-of-rice', categoryId: rizCat.id, officialPriceCap: 450, brand: null, weight: null },
-      { name: 'Riz brisé ordinaire', slug: 'riz-brise-ordinaire', unit: 'kg', icon: 'twemoji:sheaf-of-rice', categoryId: rizCat.id, officialPriceCap: 375, brand: null, weight: null },
-      { name: 'Sucre en poudre', slug: 'sucre-poudre', unit: 'kg', icon: 'twemoji:sugar', categoryId: sucreCat.id, officialPriceCap: 650, brand: 'CSS', weight: null },
-      { name: 'Huile végétale', slug: 'huile-vegetale', unit: 'L', icon: 'twemoji:bottle-with-popping-cork', categoryId: huileCat.id, officialPriceCap: 1100, brand: 'Niani', weight: null },
-    ];
-
-    for (const prod of productsData) {
-      await prisma.product.upsert({
-        where: { slug: prod.slug },
-        update: {},
-        create: prod,
+  let total = 0;
+  for (const [categorySlug, products] of Object.entries(productsByCategorySlug)) {
+    const categoryId = categoryMap[categorySlug];
+    if (!categoryId) continue;
+    for (const prod of products) {
+      const slug = slugify(prod.name);
+      
+      const product = await prisma.product.upsert({
+        where: { slug },
+        update: { icon: prod.icon, categoryId },
+        create: {
+          name: prod.name,
+          slug,
+          icon: prod.icon,
+          categoryId,
+          status: 'active',
+        },
       });
+
+      const formatLabel = `1 ${prod.unit}`;
+      await prisma.productFormat.upsert({
+        where: { productId_label: { productId: product.id, label: formatLabel } },
+        update: { unit: prod.unit, officialPriceCap: prod.officialPriceCap ?? null },
+        create: {
+          productId: product.id,
+          label: formatLabel,
+          unit: prod.unit,
+          officialPriceCap: prod.officialPriceCap ?? null,
+          status: 'active',
+        },
+      });
+
+      total++;
     }
-    console.log(`✅ ${productsData.length} produits créés`);
   }
+  console.log(`✅ ${total} produits créés/mis à jour`);
 }
 
 main()

@@ -6,7 +6,11 @@ const prisma = new PrismaClient();
 export default async function ObservationsPage() {
   const observations = await prisma.priceObservation.findMany({
     include: {
-      product: true,
+      productFormat: {
+        include: {
+          product: true,
+        },
+      },
       store: true,
       user: true,
     },
@@ -50,7 +54,8 @@ export default async function ObservationsPage() {
                       {new Date(obs.observedAt).toLocaleDateString('fr-FR')}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="font-bold text-gray-900">{obs.product.name}</div>
+                      <div className="font-bold text-gray-900">{obs.productFormat.product.name}</div>
+                      <div className="text-xs text-gray-500">{obs.productFormat.label}</div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-gray-900">{obs.store.name}</div>

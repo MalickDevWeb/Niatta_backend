@@ -59,6 +59,19 @@ async function main() {
   for (const row of results) {
     if (!row.name || !row.category || !row.unit) continue;
 
+    // Filtre pour ne garder que les produits de première nécessité (les plus utilisés au Sénégal)
+    const essentialKeywords = [
+      'riz', 'sucre', 'huile', 'lait', 'farine', 'oignon', 'pomme de terre',
+      'gaz', 'pain', 'thé', 'café', 'spaghetti', 'vermicelle', 'macaroni',
+      'poulet', 'viande', 'poisson', 'tomate en pâte', 'bouillon', 'moutarde'
+    ];
+    
+    const nameLower = row.name.toLowerCase();
+    const catLower = row.category.toLowerCase();
+    
+    const isEssential = essentialKeywords.some(kw => nameLower.includes(kw) || catLower.includes(kw));
+    if (!isEssential) continue;
+
     const slug = slugify(`${row.name} ${row.code}`);
     const categoryId = categoryMap[row.category];
 
@@ -67,17 +80,11 @@ async function main() {
     await prisma.product.upsert({
       where: { slug },
       update: {
-        brand: row.brand || null,
-        unit: row.unit,
-        officialPriceCap: row.official_price_fcfa ? parseFloat(row.official_price_fcfa) : null,
         categoryId,
       },
       create: {
-        name: row.name,
         slug,
-        brand: row.brand || null,
-        unit: row.unit,
-        officialPriceCap: row.official_price_fcfa ? parseFloat(row.official_price_fcfa) : null,
+        name: row.name,
         categoryId,
         status: 'active',
       },

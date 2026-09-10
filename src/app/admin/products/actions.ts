@@ -2,6 +2,7 @@
 
 import { PrismaClient, EntityStatus } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
+import { saveFile } from '@/lib/upload';
 
 const prisma = new PrismaClient();
 
@@ -20,26 +21,23 @@ function slugify(text: string) {
 export async function addProduct(formData: FormData) {
   const name = formData.get('name') as string;
   const categoryId = formData.get('categoryId') as string;
-  const unit = formData.get('unit') as string;
-  const icon = formData.get('icon') as string;
-  const brand = formData.get('brand') as string;
-  const weight = formData.get('weight') as string;
-  const officialPriceCap = formData.get('officialPriceCap') as string;
   const description = formData.get('description') as string;
+  const imageFile = formData.get('imageFile') as File | null;
 
-  if (!name || !categoryId || !unit) return;
+  if (!name || !categoryId) return;
 
   const slug = slugify(name);
+  
+  let iconUrl = null;
+  if (imageFile && imageFile.size > 0) {
+    iconUrl = await saveFile(imageFile);
+  }
 
   await prisma.product.create({
     data: {
       name,
       slug,
-      unit,
-      icon: icon || null,
-      brand: brand || null,
-      weight: weight || null,
-      officialPriceCap: officialPriceCap ? parseFloat(officialPriceCap) : null,
+      icon: iconUrl,
       description: description || null,
       categoryId,
       status: 'active',
@@ -53,28 +51,25 @@ export async function updateProduct(formData: FormData) {
   const id = formData.get('id') as string;
   const name = formData.get('name') as string;
   const categoryId = formData.get('categoryId') as string;
-  const unit = formData.get('unit') as string;
-  const icon = formData.get('icon') as string;
-  const brand = formData.get('brand') as string;
-  const weight = formData.get('weight') as string;
-  const officialPriceCap = formData.get('officialPriceCap') as string;
   const description = formData.get('description') as string;
+  const imageFile = formData.get('imageFile') as File | null;
 
-  if (!id || !name || !categoryId || !unit) return;
+  if (!id || !name || !categoryId) return;
+
+  const dataToUpdate: any = {
+    name,
+    slug: slugify(name),
+    description: description || null,
+    categoryId,
+  };
+
+  if (imageFile && imageFile.size > 0) {
+    dataToUpdate.icon = await saveFile(imageFile);
+  }
 
   await prisma.product.update({
     where: { id },
-    data: {
-      name,
-      slug: slugify(name),
-      unit,
-      icon: icon || null,
-      brand: brand || null,
-      weight: weight || null,
-      officialPriceCap: officialPriceCap ? parseFloat(officialPriceCap) : null,
-      description: description || null,
-      categoryId,
-    },
+    data: dataToUpdate,
   });
 
   revalidatePath('/admin/products');
@@ -98,12 +93,53 @@ export async function toggleProductStatus(formData: FormData) {
 
 export async function deleteProduct(formData: FormData) {
   const id = formData.get('id') as string;
-
   if (!id) return;
 
-  // Supprimer les observations liées d'abord
-  await prisma.priceObservation.deleteMany({ where: { productId: id } });
+  // Formats and observations will be cascade deleted if setup, otherwise delete them
+  await prisma.priceObservation.deleteMany({ where: { productFormat: { productId: id } } });
+  await prisma.productFormat.deleteMany({ where: { productId: id } });
   await prisma.product.delete({ where: { id } });
+
+  revalidatePath('/admin/products');
+}
+
+// --- PRODUCT FORMATS ACTIONS ---
+
+export async function addProductFormat(formData: FormData) {
+  const productId = formData.get('productId') as string;
+  const label = formData.get('label') as string;
+  const unit = formData.get('unit') as string;
+  const weight = formData.get('weight') as string;
+  const officialPriceCap = formData.get('officialPriceCap') as string;
+  const imageFile = formData.get('imageFile') as File | null;
+
+  if (!productId || !label || !unit) return;
+
+  let imageUrl = null;
+  if (imageFile && imageFile.size > 0) {
+    imageUrl = await saveFile(imageFile);
+  }
+
+  await prisma.productFormat.create({
+    data: {
+      productId,
+      label,
+      unit,
+      weight: weight || null,
+      officialPriceCap: officialPriceCap ? parseFloat(officialPriceCap) : null,
+      imageUrl,
+    },
+  });
+
+  revalidatePath('/admin/products');
+}
+
+export async function deleteProductFormat(formData: FormData) {
+  const id = formData.get('id') as string;
+  if (!id) return;
+
+  await prisma.priceObservation.deleteMany({ where: { productFormatId: id } });
+  await prisma.productFormat.delete({ where: { id } });
 
   revalidatePath('/admin/products');
 }
