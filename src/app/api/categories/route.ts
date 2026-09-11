@@ -37,6 +37,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Le nom de la catégorie est obligatoire.' }, { status: 400 });
     }
 
+    // Gestion de l'upload d'image (Cloudinary) si l'icône est en base64
+    let finalIconUrl = icon || null;
+    if (icon && typeof icon === 'string' && icon.startsWith('data:image')) {
+      try {
+        const { uploadToCloudinary } = await import('../../../lib/cloudinary');
+        const base64Data = icon.replace(/^data:image\/\w+;base64,/, "");
+        const buffer = Buffer.from(base64Data, 'base64');
+        finalIconUrl = await uploadToCloudinary(buffer, 'categories');
+      } catch (e) {
+        console.error("Failed to upload category icon to Cloudinary", e);
+        return NextResponse.json({ success: false, error: 'Erreur lors de l\'upload de l\'image.' }, { status: 500 });
+      }
+    }
+
     // Générer un slug à partir du nom
     const slug = name
       .toLowerCase()
@@ -56,7 +70,7 @@ export async function POST(request: Request) {
       data: {
         name: name.trim(),
         slug,
-        icon: icon || null,
+        icon: finalIconUrl,
         description: description || null,
         status: 'active'
       }
