@@ -25,8 +25,8 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'Ce numéro de téléphone n\'est pas enregistré' },
-        { status: 404 }
+        { success: false, error: 'Mot de passe incorrect' },
+        { status: 401 }
       );
     }
 

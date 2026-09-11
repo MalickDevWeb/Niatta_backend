@@ -47,8 +47,8 @@ async function main() {
   );
   console.log('✅ Rôles et permissions configurés');
 
-  const adminPhone = '+221770000001';
-  const adminPassword = await bcrypt.hash('admin123', 10);
+  const adminPhone = '+221771719013';
+  const adminPassword = await bcrypt.hash('1234', 10);
   await prisma.user.upsert({
     where: { phone: adminPhone },
     update: {},
@@ -61,7 +61,7 @@ async function main() {
       phoneVerifiedAt: new Date(),
     },
   });
-  console.log(`✅ Admin: ${adminPhone} / admin123`);
+  console.log(`✅ Admin: ${adminPhone} / 1234`);
 
   function slugify(text: string) {
     return text.toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, '').replace(/--+/g, '-');
