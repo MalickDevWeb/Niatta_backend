@@ -33,7 +33,8 @@ export async function GET(request: Request) {
       SELECT 
         id, 
         name, 
-        "imageUrl", 
+        "imageUrl",
+        photos, 
         status, 
         ST_Distance(location, ST_MakePoint(${lng}, ${lat})::geography) AS distance_meters
       FROM "Store"

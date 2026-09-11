@@ -1,3 +1,4 @@
+import React from 'react';
 import { addCategory, toggleCategoryStatus, updateCategory, deleteCategory } from './actions';
 import { Plus, Edit2 } from 'lucide-react';
 
@@ -64,8 +65,8 @@ export default async function CategoriesPage() {
                 </tr>
               ) : (
                 categories.map((cat) => (
-                  <>
-                    <tr key={cat.id} className="hover:bg-gray-50 transition-colors">
+                  <React.Fragment key={cat.id}>
+                    <tr className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 font-bold text-gray-900">
                         {cat.name}
                         {cat.icon && <span className="ml-2 text-xs text-gray-500">({cat.icon})</span>}
@@ -105,7 +106,7 @@ export default async function CategoriesPage() {
                         </div>
                       </td>
                     </tr>
-                    <tr key={`edit-${cat.id}`} className="bg-amber-50">
+                    <tr className="bg-amber-50">
                       <td colSpan={5} className="px-6 py-3 border-b border-amber-100">
                         <details className="group">
                           <summary className="text-xs font-bold text-amber-700 cursor-pointer hover:text-amber-900 flex items-center gap-1">
@@ -132,7 +133,7 @@ export default async function CategoriesPage() {
                         </details>
                       </td>
                     </tr>
-                  </>
+                  </React.Fragment>
                 ))
               )}
             </tbody>

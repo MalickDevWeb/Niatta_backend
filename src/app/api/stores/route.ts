@@ -26,6 +26,7 @@ export async function GET() {
       address: (s as any).address || [s.neighborhood, s.city].filter(Boolean).join(', ') || null,
       rating: (s as any).rating ? Number((s as any).rating) : null,
       imageUrl: (s as any).imageUrl || null,
+      photos: (s as any).photos || [],
       observationCount: s._count.observations,
       source: s.source,
     }));

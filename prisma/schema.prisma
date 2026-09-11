@@ -142,7 +142,8 @@ model Store {
   neighborhood   String?
   address        String?            // Adresse complète lisible
   rating         Decimal?           @db.Decimal(3, 1)  // Note sur 5 (ex: 4.5)
-  imageUrl       String?            // Photo de la boutique
+  imageUrl       String?            // Photo principale (rétrocompatibilité)
+  photos         String[]           @default([]) // Liste des photos (jusqu'à 3)
   status         EntityStatus       @default(active)
   source         StoreSource        @default(citizen_report)
   createdAt      DateTime           @default(now())

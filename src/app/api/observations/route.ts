@@ -46,6 +46,30 @@ export async function POST(request: Request) {
     const lat = latitude !== undefined ? parseFloat(latitude) : 0;
     const lng = longitude !== undefined ? parseFloat(longitude) : 0;
 
+    // Handle Base64 Image if provided
+    let savedImageUrl = null;
+    if (photoUrl && photoUrl.startsWith('data:image')) {
+      try {
+        const fs = require('fs');
+        const path = require('path');
+        const { v4: uuidv4 } = require('uuid');
+        
+        const base64Data = photoUrl.replace(/^data:image\/\w+;base64,/, "");
+        const extension = photoUrl.substring(photoUrl.indexOf('/') + 1, photoUrl.indexOf(';base64'));
+        const fileName = `${uuidv4()}.${extension}`;
+        const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+        
+        if (!fs.existsSync(uploadDir)){
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        
+        fs.writeFileSync(path.join(uploadDir, fileName), base64Data, 'base64');
+        savedImageUrl = `http://localhost:3000/uploads/${fileName}`;
+      } catch (e) {
+        console.error("Failed to save base64 image", e);
+      }
+    }
+
     let finalStoreId = storeId;
     let observationStatus = 'pending';
 
@@ -55,31 +79,19 @@ export async function POST(request: Request) {
       if (!existingStore) {
         return NextResponse.json({ success: false, error: 'Boutique spécifiée introuvable.' }, { status: 400 });
       }
-    } else {
-      // Handle Base64 Image if provided
-      let savedImageUrl = null;
-      if (photoUrl && photoUrl.startsWith('data:image')) {
-        try {
-          const fs = require('fs');
-          const path = require('path');
-          const { v4: uuidv4 } = require('uuid');
-          
-          const base64Data = photoUrl.replace(/^data:image\/\w+;base64,/, "");
-          const extension = photoUrl.substring(photoUrl.indexOf('/') + 1, photoUrl.indexOf(';base64'));
-          const fileName = `${uuidv4()}.${extension}`;
-          const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-          
-          if (!fs.existsSync(uploadDir)){
-              fs.mkdirSync(uploadDir, { recursive: true });
+      
+      // Ajouter la photo à la boutique si ce n'est pas déjà le cas et si < 3 photos
+      if (savedImageUrl && existingStore.photos.length < 3 && !existingStore.photos.includes(savedImageUrl)) {
+        await prisma.store.update({
+          where: { id: existingStore.id },
+          data: {
+            photos: {
+              push: savedImageUrl
+            }
           }
-          
-          fs.writeFileSync(path.join(uploadDir, fileName), base64Data, 'base64');
-          savedImageUrl = `http://localhost:3000/uploads/${fileName}`;
-        } catch (e) {
-          console.error("Failed to save base64 image", e);
-        }
+        });
       }
-
+    } else {
       // Nouvelle boutique : Algorithme garde-fou anti-doublon
       const recentStores: any[] = await prisma.$queryRaw`
         SELECT id FROM "Store"
@@ -102,6 +114,7 @@ export async function POST(request: Request) {
           latitude: lat,
           longitude: lng,
           imageUrl: savedImageUrl,
+          photos: savedImageUrl ? [savedImageUrl] : [],
           source: 'citizen_report'
         }
       });
