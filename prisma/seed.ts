@@ -1,5 +1,14 @@
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { v2 as cloudinary } from 'cloudinary';
+import * as path from 'path';
+
+// Configure Cloudinary with user's credentials
+cloudinary.config({
+  cloud_name: 'djp423xyr',
+  api_key: '577389579188942',
+  api_secret: 'P8DmL-YVGYnBGJKQcaM2GSNDyMg',
+});
 
 const prisma = new PrismaClient();
 
@@ -10,8 +19,30 @@ const permissionSlugs = [
   'users.view', 'users.suspend', 'analytics.view',
 ];
 
+async function uploadImageToCloudinary(localPath: string): Promise<string> {
+  try {
+    const absolutePath = path.resolve(__dirname, '../../frontend-angular/public', localPath.replace(/^\//, ''));
+    console.log(`📤 Uploading ${absolutePath} to Cloudinary...`);
+    const result = await cloudinary.uploader.upload(absolutePath, {
+      folder: 'justeprix/products',
+      use_filename: true,
+      unique_filename: false,
+    });
+    return result.secure_url;
+  } catch (error) {
+    console.error(`❌ Failed to upload ${localPath}`, error);
+    return localPath; // Fallback to local path if upload fails
+  }
+}
+
 async function main() {
-  console.log('🌱 Démarrage du seed...');
+  console.log('🌱 Démarrage du seed avec Cloudinary...');
+
+  // 1. Nettoyer les produits existants sans image
+  console.log('🗑️ Suppression des anciens produits pour nettoyer la base...');
+  await prisma.priceObservation.deleteMany({});
+  await prisma.productFormat.deleteMany({});
+  await prisma.product.deleteMany({});
   
   const permissions = await Promise.all(
     permissionSlugs.map((slug) =>
@@ -22,7 +53,7 @@ async function main() {
       }),
     ),
   );
-  console.log(`✅ ${permissions.length} permissions créées`);
+  console.log(`✅ ${permissions.length} permissions configurées`);
 
   await prisma.role.upsert({
     where: { slug: 'citizen' },
@@ -45,7 +76,6 @@ async function main() {
       }),
     ),
   );
-  console.log('✅ Rôles et permissions configurés');
 
   const adminPhone = '+221771719013';
   const adminPassword = await bcrypt.hash('1234', 10);
@@ -61,7 +91,6 @@ async function main() {
       phoneVerifiedAt: new Date(),
     },
   });
-  console.log(`✅ Admin: ${adminPhone} / 1234`);
 
   function slugify(text: string) {
     return text.toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, '').replace(/--+/g, '-');
@@ -83,31 +112,21 @@ async function main() {
     });
     categoryMap[cat.slug] = created.id;
   }
-  console.log(`✅ ${categoriesData.length} catégories créées`);
 
-  // ─── Produits ────────────────────────────────────────────────────────────────
-  type ProdDef = { name: string; icon: string; unit: string; officialPriceCap?: number };
+  // ─── Produits (Only those with existing images) ──────────────────────────────
+  type ProdDef = { name: string; localIcon: string; unit: string; officialPriceCap?: number };
   const productsByCategorySlug: Record<string, ProdDef[]> = {
     'ndeki': [
-      { name: 'Beurre', icon: '/assets/images/products/beurre.jpg', unit: 'kg', officialPriceCap: 2500 },
-      { name: 'Café',   icon: '/assets/images/products/cafe.jpg', unit: 'kg', officialPriceCap: 3500 },
-      { name: 'Lait',   icon: '/assets/images/products/lait.jpg', unit: 'kg', officialPriceCap: 3000 },
-      { name: 'Sucre',  icon: '/assets/images/products/sucre.jpg', unit: 'kg', officialPriceCap: 600 },
-      { name: 'Pain',   icon: '/assets/images/products/pain.jpg', unit: 'pièce', officialPriceCap: 150 },
+      { name: 'Beurre', localIcon: '/assets/images/products/beurre.jpg', unit: 'kg', officialPriceCap: 2500 },
+      { name: 'Café',   localIcon: '/assets/images/products/cafe.jpg', unit: 'kg', officialPriceCap: 3500 },
+      { name: 'Lait',   localIcon: '/assets/images/products/lait.jpg', unit: 'kg', officialPriceCap: 3000 },
+      { name: 'Sucre',  localIcon: '/assets/images/products/sucre.jpg', unit: 'kg', officialPriceCap: 600 },
+      { name: 'Pain',   localIcon: '/assets/images/products/pain.jpg', unit: 'pièce', officialPriceCap: 150 },
     ],
     'agne': [
-      { name: 'Riz',    icon: '/assets/images/products/riz.jpg', unit: 'kg', officialPriceCap: 300 },
-      { name: 'Huile',  icon: 'fluent-emoji:olive', unit: 'litre', officialPriceCap: 1000 },
-      { name: 'Farine', icon: 'fluent-emoji:wheat', unit: 'kg', officialPriceCap: 400 },
-      { name: 'Mil',    icon: 'fluent-emoji:ear-of-corn', unit: 'kg', officialPriceCap: 388 },
-      { name: 'Pâtes',  icon: 'fluent-emoji:spaghetti', unit: 'kg', officialPriceCap: 600 },
+      { name: 'Riz',    localIcon: '/assets/images/products/riz.jpg', unit: 'kg', officialPriceCap: 300 },
     ],
-    'saf-safal': [
-      { name: 'Nokoss',  icon: 'fluent-emoji:herb', unit: 'pot', officialPriceCap: 500 },
-      { name: 'Netetou', icon: 'fluent-emoji:chestnut', unit: 'boule', officialPriceCap: 100 },
-      { name: 'Piment',  icon: 'fluent-emoji:hot-pepper', unit: 'sachet', officialPriceCap: 100 },
-      { name: 'Ail',     icon: 'fluent-emoji:garlic', unit: 'pièce', officialPriceCap: 100 },
-    ],
+    'saf-safal': [],
   };
 
   let total = 0;
@@ -117,13 +136,16 @@ async function main() {
     for (const prod of products) {
       const slug = slugify(prod.name);
       
+      // Upload to Cloudinary
+      const cloudinaryUrl = await uploadImageToCloudinary(prod.localIcon);
+      
       const product = await prisma.product.upsert({
         where: { slug },
-        update: { icon: prod.icon, categoryId },
+        update: { icon: cloudinaryUrl, categoryId },
         create: {
           name: prod.name,
           slug,
-          icon: prod.icon,
+          icon: cloudinaryUrl, // Using cloudinary URL for icon so frontend can use it directly
           categoryId,
           status: 'active',
         },
@@ -145,7 +167,7 @@ async function main() {
       total++;
     }
   }
-  console.log(`✅ ${total} produits créés/mis à jour`);
+  console.log(`✅ ${total} produits créés/mis à jour avec leurs images sur Cloudinary`);
 }
 
 main()
