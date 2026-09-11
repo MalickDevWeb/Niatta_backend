@@ -89,14 +89,14 @@ async function main() {
   type ProdDef = { name: string; icon: string; unit: string; officialPriceCap?: number };
   const productsByCategorySlug: Record<string, ProdDef[]> = {
     'ndeki': [
-      { name: 'Beurre', icon: 'fluent-emoji:butter', unit: 'kg' },
-      { name: 'Café',   icon: 'fluent-emoji:hot-beverage', unit: 'kg' },
-      { name: 'Lait',   icon: 'fluent-emoji:glass-of-milk', unit: 'kg' },
-      { name: 'Sucre',  icon: 'fluent-emoji:candy', unit: 'kg', officialPriceCap: 600 },
-      { name: 'Pain',   icon: 'fluent-emoji:baguette-bread', unit: 'pièce', officialPriceCap: 150 },
+      { name: 'Beurre', icon: '/assets/images/products/beurre.jpg', unit: 'kg' },
+      { name: 'Café',   icon: '/assets/images/products/cafe.jpg', unit: 'kg' },
+      { name: 'Lait',   icon: '/assets/images/products/lait.jpg', unit: 'kg' },
+      { name: 'Sucre',  icon: '/assets/images/products/sucre.jpg', unit: 'kg', officialPriceCap: 600 },
+      { name: 'Pain',   icon: '/assets/images/products/pain.jpg', unit: 'pièce', officialPriceCap: 150 },
     ],
     'agne': [
-      { name: 'Riz',    icon: 'fluent-emoji:cooked-rice', unit: 'kg', officialPriceCap: 300 },
+      { name: 'Riz',    icon: '/assets/images/products/riz.jpg', unit: 'kg', officialPriceCap: 300 },
       { name: 'Huile',  icon: 'fluent-emoji:olive', unit: 'litre', officialPriceCap: 1000 },
       { name: 'Farine', icon: 'fluent-emoji:wheat', unit: 'kg', officialPriceCap: 400 },
       { name: 'Mil',    icon: 'fluent-emoji:ear-of-corn', unit: 'kg', officialPriceCap: 388 },
