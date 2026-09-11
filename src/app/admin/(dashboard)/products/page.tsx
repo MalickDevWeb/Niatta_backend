@@ -1,7 +1,6 @@
-import { PrismaClient } from '@prisma/client';
 import ProductsClient from './products-client';
 
-const prisma = new PrismaClient();
+import { prisma } from '../../../../lib/prisma';
 
 export default async function ProductsPage() {
   const [products, categories] = await Promise.all([

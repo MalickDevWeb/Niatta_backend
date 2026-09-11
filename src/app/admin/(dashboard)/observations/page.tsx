@@ -1,7 +1,6 @@
-import { PrismaClient } from '@prisma/client';
 import { updateObservationStatus } from './actions';
 
-const prisma = new PrismaClient();
+import { prisma } from '../../../../lib/prisma';
 
 export default async function ObservationsPage() {
   const observations = await prisma.priceObservation.findMany({

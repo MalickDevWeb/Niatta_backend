@@ -3,7 +3,7 @@
 import { PrismaClient, ReportStatus } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
-const prisma = new PrismaClient();
+import { prisma } from '../../../../lib/prisma';
 
 export async function updateObservationStatus(formData: FormData) {
   const id = formData.get('id') as string;

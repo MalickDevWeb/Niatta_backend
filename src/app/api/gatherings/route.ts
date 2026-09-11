@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import * as jwt from 'jsonwebtoken';
 
-const prisma = new PrismaClient();
+import { prisma } from '../../../lib/prisma';
 
 /**
  * GET /api/gatherings

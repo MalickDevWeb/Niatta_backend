@@ -3,7 +3,7 @@
 import { PrismaClient, EntityStatus } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
-const prisma = new PrismaClient();
+import { prisma } from '../../../../lib/prisma';
 
 export async function addStore(formData: FormData) {
   const name = formData.get('name') as string;

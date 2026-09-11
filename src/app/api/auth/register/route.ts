@@ -1,15 +1,20 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-const prisma = new PrismaClient();
+import { prisma } from '../../../../lib/prisma';
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-justeprix';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, phone, password } = body;
+    let { name, phone, password } = body;
+
+    if (phone) {
+      phone = phone.replace(/\s+/g, '');
+      if (phone.startsWith('00221')) phone = '+' + phone.substring(2);
+      else if (!phone.startsWith('+221') && phone.length === 9) phone = '+221' + phone;
+    }
 
     if (!name || !phone || !password) {
       return NextResponse.json(

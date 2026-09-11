@@ -3,7 +3,7 @@
 import { PrismaClient, UserStatus } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
-const prisma = new PrismaClient();
+import { prisma } from '../../../../lib/prisma';
 
 export async function toggleUserStatus(formData: FormData) {
   const id = formData.get('id') as string;

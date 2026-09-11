@@ -1,7 +1,6 @@
-import { PrismaClient } from '@prisma/client';
 import { toggleUserStatus, deleteUser } from './actions';
 
-const prisma = new PrismaClient();
+import { prisma } from '../../../../lib/prisma';
 
 export default async function UsersPage() {
   const users = await prisma.user.findMany({

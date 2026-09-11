@@ -1,8 +1,7 @@
-import { PrismaClient } from '@prisma/client';
 import { addCategory, toggleCategoryStatus, updateCategory, deleteCategory } from './actions';
 import { Plus, Edit2 } from 'lucide-react';
 
-const prisma = new PrismaClient();
+import { prisma } from '../../../../lib/prisma';
 
 export default async function CategoriesPage() {
   const categories = await prisma.category.findMany({

@@ -1,8 +1,7 @@
-import { PrismaClient } from '@prisma/client';
 import { addStore, updateStore, toggleStoreStatus, deleteStore } from './actions';
 import { Plus, MapPin, Star } from 'lucide-react';
 
-const prisma = new PrismaClient();
+import { prisma } from '../../../../lib/prisma';
 
 export default async function StoresPage() {
   const stores = await prisma.store.findMany({

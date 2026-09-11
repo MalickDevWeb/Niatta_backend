@@ -1,7 +1,6 @@
-import { PrismaClient } from '@prisma/client';
 import { Package, AlertTriangle, Users, MapPin } from 'lucide-react';
 
-const prisma = new PrismaClient();
+import { prisma } from '../../../lib/prisma';
 
 export default async function AdminDashboard() {
   // Fetch basic stats

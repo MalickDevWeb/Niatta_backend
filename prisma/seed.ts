@@ -71,6 +71,7 @@ async function main() {
   const categoriesData = [
     { name: 'Ndeki',     slug: 'ndeki',     icon: '/assets/images/image.png' },
     { name: 'Agne',      slug: 'agne',      icon: '/assets/images/agne.png' },
+    { name: 'Saf safal', slug: 'saf-safal', icon: '/assets/images/saf-safal.png' },
   ];
 
   const categoryMap: Record<string, string> = {};
@@ -100,6 +101,12 @@ async function main() {
       { name: 'Farine', icon: 'fluent-emoji:wheat', unit: 'kg', officialPriceCap: 400 },
       { name: 'Mil',    icon: 'fluent-emoji:ear-of-corn', unit: 'kg', officialPriceCap: 388 },
       { name: 'Pâtes',  icon: 'fluent-emoji:spaghetti', unit: 'kg' },
+    ],
+    'saf-safal': [
+      { name: 'Nokoss',  icon: 'fluent-emoji:herb', unit: 'pot' },
+      { name: 'Netetou', icon: 'fluent-emoji:chestnut', unit: 'boule' },
+      { name: 'Piment',  icon: 'fluent-emoji:hot-pepper', unit: 'sachet' },
+      { name: 'Ail',     icon: 'fluent-emoji:garlic', unit: 'pièce' },
     ],
   };
 

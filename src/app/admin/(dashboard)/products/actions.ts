@@ -4,7 +4,7 @@ import { PrismaClient, EntityStatus } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { saveFile } from '@/lib/upload';
 
-const prisma = new PrismaClient();
+import { prisma } from '../../../../lib/prisma';
 
 function slugify(text: string) {
   return text

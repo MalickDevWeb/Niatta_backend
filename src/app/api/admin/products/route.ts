@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
-const prisma = new PrismaClient();
+import { prisma } from '../../../../lib/prisma';
 
 function slugify(text: string) {
   return text.toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, '').replace(/--+/g, '-');

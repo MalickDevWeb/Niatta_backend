@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import * as jwt from 'jsonwebtoken';
 import webpush from 'web-push';
 
-const prisma = new PrismaClient();
+import { prisma } from '../../../../lib/prisma';
 
 // Configure web-push with VAPID keys
 webpush.setVapidDetails(
