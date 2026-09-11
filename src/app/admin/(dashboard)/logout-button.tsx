@@ -7,7 +7,7 @@ export default function LogoutButton() {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');
       document.cookie = 'admin_token=; path=/; max-age=0; SameSite=Lax';
-      window.location.href = '/admin/login';
+      window.location.href = '/';
     }
   }
 

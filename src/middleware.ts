@@ -4,11 +4,11 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Protect every /admin route except the login page
-  if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')) {
+  // Protect every /admin route
+  if (pathname.startsWith('/admin')) {
     const token = request.cookies.get('admin_token')?.value;
     if (!token) {
-      const loginUrl = new URL('/admin/login', request.nextUrl.origin);
+      const loginUrl = new URL('/', request.nextUrl.origin);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
