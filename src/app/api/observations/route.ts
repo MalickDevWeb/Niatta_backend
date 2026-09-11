@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../../../lib/prisma';
-
+import { uploadToCloudinary } from '../../../lib/cloudinary';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { productId, formatId, price, city, neighborhood, storeName, latitude, longitude, storeId, photoUrl } = body;
+    const { productId, formatId, price, city, neighborhood, storeName, latitude, longitude, storeId, photoUrls } = body;
     
     if (!productId || typeof productId !== 'string' || productId.trim() === '') {
       return NextResponse.json({ success: false, error: 'Veuillez sélectionner un produit valide.' }, { status: 400 });
@@ -46,28 +46,25 @@ export async function POST(request: Request) {
     const lat = latitude !== undefined ? parseFloat(latitude) : 0;
     const lng = longitude !== undefined ? parseFloat(longitude) : 0;
 
-    // Handle Base64 Image if provided
-    let savedImageUrl = null;
-    if (photoUrl && photoUrl.startsWith('data:image')) {
-      try {
-        const fs = require('fs');
-        const path = require('path');
-        const { v4: uuidv4 } = require('uuid');
-        
-        const base64Data = photoUrl.replace(/^data:image\/\w+;base64,/, "");
-        const extension = photoUrl.substring(photoUrl.indexOf('/') + 1, photoUrl.indexOf(';base64'));
-        const fileName = `${uuidv4()}.${extension}`;
-        const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-        
-        if (!fs.existsSync(uploadDir)){
-            fs.mkdirSync(uploadDir, { recursive: true });
+    // Handle Base64 Images if provided
+    let uploadedImageUrls: string[] = [];
+    if (photoUrls && Array.isArray(photoUrls) && photoUrls.length > 0) {
+      const uploadPromises = photoUrls.map(async (url: string) => {
+        if (url && url.startsWith('data:image')) {
+          try {
+            const base64Data = url.replace(/^data:image\/\w+;base64,/, "");
+            const buffer = Buffer.from(base64Data, 'base64');
+            return await uploadToCloudinary(buffer, 'observations');
+          } catch (e) {
+            console.error("Failed to upload image to Cloudinary", e);
+            return null;
+          }
         }
-        
-        fs.writeFileSync(path.join(uploadDir, fileName), base64Data, 'base64');
-        savedImageUrl = `http://localhost:3000/uploads/${fileName}`;
-      } catch (e) {
-        console.error("Failed to save base64 image", e);
-      }
+        return null;
+      });
+      
+      const results = await Promise.all(uploadPromises);
+      uploadedImageUrls = results.filter((url): url is string => url !== null);
     }
 
     let finalStoreId = storeId;
@@ -80,16 +77,19 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: false, error: 'Boutique spécifiée introuvable.' }, { status: 400 });
       }
       
-      // Ajouter la photo à la boutique si ce n'est pas déjà le cas et si < 3 photos
-      if (savedImageUrl && existingStore.photos.length < 3 && !existingStore.photos.includes(savedImageUrl)) {
-        await prisma.store.update({
-          where: { id: existingStore.id },
-          data: {
-            photos: {
-              push: savedImageUrl
+      // Ajouter les photos à la boutique si ce n'est pas déjà le cas et si < 3 photos
+      if (uploadedImageUrls.length > 0) {
+        const newPhotos = uploadedImageUrls.filter(url => !existingStore.photos.includes(url));
+        if (newPhotos.length > 0) {
+          const finalPhotos = [...existingStore.photos, ...newPhotos].slice(0, 3);
+          await prisma.store.update({
+            where: { id: existingStore.id },
+            data: {
+              photos: finalPhotos,
+              ...(existingStore.imageUrl ? {} : { imageUrl: finalPhotos[0] })
             }
-          }
-        });
+          });
+        }
       }
     } else {
       // Nouvelle boutique : Algorithme garde-fou anti-doublon
@@ -113,8 +113,8 @@ export async function POST(request: Request) {
           neighborhood: neighborhood || 'Inconnu',
           latitude: lat,
           longitude: lng,
-          imageUrl: savedImageUrl,
-          photos: savedImageUrl ? [savedImageUrl] : [],
+          imageUrl: uploadedImageUrls.length > 0 ? uploadedImageUrls[0] : null,
+          photos: uploadedImageUrls.slice(0, 3),
           source: 'citizen_report'
         }
       });
@@ -139,6 +139,7 @@ export async function POST(request: Request) {
         neighborhood: neighborhood,
         latitude: lat,
         longitude: lng,
+        photoUrl: uploadedImageUrls.length > 0 ? uploadedImageUrls[0] : null,
         status: observationStatus as any,
         observedAt: new Date()
       }
