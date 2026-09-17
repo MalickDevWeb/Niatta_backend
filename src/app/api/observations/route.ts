@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
-import { prisma } from '../../../lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { uploadToCloudinary } from '../../../lib/cloudinary';
 export async function POST(request: Request) {
   try {

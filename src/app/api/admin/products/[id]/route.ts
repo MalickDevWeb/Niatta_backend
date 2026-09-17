@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 
-import { prisma } from '../../../../../lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { uploadToCloudinary, deleteFromCloudinary, extractPublicId } from '../../../../../lib/cloudinary';
 
 function slugify(text: string) {

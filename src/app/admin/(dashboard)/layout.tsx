@@ -45,6 +45,10 @@ export default function AdminLayout({
             <Users size={20} />
             Utilisateurs
           </Link>
+          <Link href="/admin/field-agents" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium transition-colors">
+            <Users size={20} />
+            Agents Terrain
+          </Link>
           <Link href="/admin/gatherings" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-red-50 hover:text-red-600 font-medium transition-colors">
             <MapPin size={20} />
             Rassemblement

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-import { prisma } from '../../../../lib/prisma';
+import { prisma } from '@/lib/prisma';
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-justeprix';
 
 export async function POST(request: Request) {
@@ -25,7 +25,12 @@ export async function POST(request: Request) {
 
     // Check if user exists
     const user = await prisma.user.findUnique({
-      where: { phone }
+      where: { phone },
+      include: {
+        roles: {
+          include: { role: true }
+        }
+      }
     });
 
     if (!user) {
@@ -56,7 +61,7 @@ export async function POST(request: Request) {
       { 
         success: true, 
         data: { 
-          user: { id: user.id, name: user.name, phone: user.phone },
+          user: { id: user.id, name: user.name, phone: user.phone, roles: user.roles },
           token 
         } 
       },

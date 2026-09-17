@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import * as jwt from 'jsonwebtoken';
 
-import { prisma } from '../../../lib/prisma';
+import { prisma } from '@/lib/prisma';
 
 /**
  * GET /api/gatherings

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import * as jwt from 'jsonwebtoken';
 import webpush from 'web-push';
 
-import { prisma } from '../../../../lib/prisma';
+import { prisma } from '@/lib/prisma';
 
 // Configure web-push with VAPID keys
 webpush.setVapidDetails(

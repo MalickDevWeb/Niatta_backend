@@ -41,8 +41,10 @@ model User {
   phoneVerifiedAt DateTime?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
+  photoUrl        String?
   roles           UserRole[]
   observations    PriceObservation[]
+  fieldVerifications FieldVerification[]
   pushSubscriptions PushSubscription[]
 }
 
@@ -174,6 +176,7 @@ model PriceObservation {
   store            Store           @relation(fields: [storeId], references: [id])
   productFormat    ProductFormat   @relation(fields: [productFormatId], references: [id])
   user             User            @relation(fields: [userId], references: [id])
+  fieldVerifications FieldVerification[]
   
   @@index([storeId, productFormatId, userId, observedAt])
   @@index([location], name: "observation_location_idx", type: Gist)
@@ -199,4 +202,20 @@ model GatheringPoint {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model FieldVerification {
+  id              String           @id @default(uuid()) @db.Uuid
+  observationId   String           @db.Uuid
+  agentId         String           @db.Uuid
+  isConfirmed     Boolean
+  actualPrice     Decimal?         @db.Decimal(12, 2)
+  photoUrl        String?
+  comment         String?
+  createdAt       DateTime         @default(now())
+  
+  observation     PriceObservation @relation(fields: [observationId], references: [id])
+  agent           User             @relation(fields: [agentId], references: [id])
+
+  @@index([observationId, agentId, createdAt])
 }
